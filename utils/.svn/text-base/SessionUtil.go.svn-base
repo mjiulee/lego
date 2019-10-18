@@ -1,0 +1,46 @@
+package utils
+
+import (
+	"github.com/kataras/go-sessions"
+	"github.com/valyala/fasthttp"
+)
+
+// 通过content获取user_id
+func GetUserIdFromSession(ctx *fasthttp.RequestCtx) string {
+	sess := sessions.StartFasthttp(ctx) // init the session
+	sessValues := sess.GetAll()         // get all values from this session
+	// fmt.Println("session: %s\n", sessValues)
+	userid := sessValues["user_id"]
+	if userid != nil {
+		return string(userid.(string))
+	} else {
+		return ""
+	}
+}
+
+// 通过content获取user_id
+func GetCaptchaIdFromSession(ctx *fasthttp.RequestCtx) string {
+	sess := sessions.StartFasthttp(ctx) // init the session
+	sessValues := sess.GetAll()         // get all values from this session
+	// fmt.Println("session: %s\n", sessValues)
+	userid := sessValues["Captcha"]
+	if userid != nil {
+		return string(userid.(string))
+	} else {
+		return ""
+	}
+}
+
+// 通过content获取user_id
+func GetKeyValFromSession(key string, ctx *fasthttp.RequestCtx) string {
+	sess := sessions.StartFasthttp(ctx) // init the session
+	sessValues := sess.GetAll()         // get all values from this session
+	// fmt.Println("session: %s\n", sessValues)
+
+	keyval := sessValues[key]
+	if keyval != nil {
+		return string(keyval.(string))
+	} else {
+		return ""
+	}
+}

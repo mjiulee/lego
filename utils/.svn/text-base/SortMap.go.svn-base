@@ -1,0 +1,28 @@
+package utils
+
+import "sort"
+
+type Pair struct {
+    Area   string
+    Value int
+}
+type PairList []Pair
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+
+/*	南2018-7-30
+ *  根据传入的map[string]int64，排序（降序）并生成数组输出，需找时间优化，把int64改为interface{},通用其他类型
+ */
+func SortMapByValue(m map[string]int64) PairList {
+    p := make(PairList, len(m))
+    i := 0
+    for k, v := range m {
+		p[i] = Pair{k, int(v)}
+		i++
+	}
+	
+    sort.Reverse(p)
+    return p
+}
+

@@ -1,0 +1,39 @@
+package utils
+
+import (
+	"fmt"
+	"time"
+)
+
+// Add params to a url string.
+func GenOrderNumer() string {
+	ranNumber := RandString(6, KC_RAND_KIND_NUM)
+	datetime := string(time.Now().Format("060102150405"))
+	return fmt.Sprintf("%s%s", datetime, ranNumber)
+}
+
+// Add params to a url string.
+func GenCodeNumer() string {
+	ranNumber := RandString(4, KC_RAND_KIND_NUM)
+	datetime := string(time.Now().Format("20060102150405"))
+	return fmt.Sprintf("%s%s", datetime, ranNumber)
+}
+
+func GenComplaintNumer() string {
+	ranNumber := RandString(2, KC_RAND_KIND_NUM)
+	datetime := string(time.Now().Format("060102150405"))
+	return fmt.Sprintf("TS%s%s", datetime, ranNumber)
+}
+
+func GenRefundNumer() string {
+	ranNumber := RandString(2, KC_RAND_KIND_NUM)
+	datetime := string(time.Now().Format("060102150405"))
+	return fmt.Sprintf("TK%s%s", datetime, ranNumber)
+}
+
+
+func GenSerialNumer() string {
+	ranNumber := RandString(2, KC_RAND_KIND_NUM)
+	datetime := string(time.Now().Format("060102150405"))
+	return fmt.Sprintf("TS%s%s", datetime, ranNumber)
+}

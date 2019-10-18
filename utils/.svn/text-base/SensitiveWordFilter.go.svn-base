@@ -1,0 +1,127 @@
+package utils
+
+import (
+	"io/ioutil"
+	"os"
+	"strings"
+	"unicode/utf8"
+)
+
+var __swtSignletom *Trie
+
+type Trie struct {
+	Root *TrieNode
+}
+
+type TrieNode struct {
+	Children map[rune]*TrieNode
+	End      bool
+}
+
+/*获取单例*/
+func GetSensitiveInstance(filepath string) *Trie {
+	if __swtSignletom != nil {
+		return __swtSignletom
+	}
+	t := newTrie()
+	slice := readWordFromFile(filepath)
+	//把敏感词库导入到Trie树中，返回该树
+	for i := 0; i < len(slice); i++ {
+		t.Inster(slice[i])
+	}
+	__swtSignletom = t
+	return __swtSignletom
+}
+
+func newTrie() *Trie {
+	r := new(Trie)
+	r.Root = newTrieNode()
+	return r
+}
+
+func newTrieNode() *TrieNode {
+	n := new(TrieNode)
+	n.Children = make(map[rune]*TrieNode)
+	return n
+}
+
+/*
+	读取敏感词文件 txt
+	将每行敏感词转化成切片 slice 输出
+*/
+func readWordFromFile(filepath string) []string {
+	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_APPEND|os.O_CREATE, os.ModeType)
+	if err != nil {
+		panic(err)
+	}
+	//关闭
+	defer file.Close()
+
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+
+	a := strings.Replace(string(b), "\r\n", "\n", -1)
+	return strings.Split(a, "\n")
+}
+
+/*
+	把敏感词添加到 Trie 树中
+*/
+func (this *Trie) Inster(txt string) {
+	if len(txt) < 1 {
+		return
+	}
+	node := this.Root
+	key := []rune(txt)
+	for i := 0; i < len(key); i++ {
+		if _, exists := node.Children[key[i]]; !exists {
+			node.Children[key[i]] = newTrieNode()
+		}
+		node = node.Children[key[i]]
+	}
+
+	node.End = true
+}
+
+/*
+	替换敏感词为 “ * ”
+*/
+func (this *Trie) Replace(txt string) string {
+	if len(txt) < 1 {
+		return txt
+	}
+	node := this.Root
+	key := []rune(txt)
+	var chars []rune = nil
+	slen := len(key)
+	for i := 0; i < slen; i++ {
+		if _, exists := node.Children[key[i]]; exists {
+			node = node.Children[key[i]]
+			for j := i + 1; j < slen; j++ {
+				if _, exists := node.Children[key[j]]; exists {
+					node = node.Children[key[j]]
+					if node.End == true {
+						if chars == nil {
+							chars = key
+						}
+						for t := i; t <= j; t++ {
+							c, _ := utf8.DecodeRuneInString("*")
+							chars[t] = c
+						}
+						i = j
+						node = this.Root
+						break
+					}
+				}
+			}
+			node = this.Root
+		}
+	}
+	if chars == nil {
+		return txt
+	} else {
+		return string(chars)
+	}
+}
