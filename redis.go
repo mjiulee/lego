@@ -266,7 +266,7 @@ func RedisGeoAdd(key string, lat, lng float64, id string) (int, error) {
 		return 0, err
 	}
 	defer redisconn.Close()
-	return redis.Int(redisconn.Do("GEOADD", key, lat, lng, id))
+	return redis.Int(redisconn.Do("GEOADD", key, lng, lat, id))
 }
 
 func RedisGeoPos(key, id string) ([]string, error) {
@@ -295,4 +295,41 @@ func RedisGeoRadius(key string, lat, lng, radius float64) ([]string, error) {
 	}
 	defer redisconn.Close()
 	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "KM", "WITHDIST WITHCOORD ASC"))
+}
+
+// 列表相关
+func RedisListLPush(key string, val interface{}) (int, error) {
+	redisconn, err := GetRedisConn()
+	if err != nil {
+		return -1, err
+	}
+	defer redisconn.Close()
+	return redis.Int(redisconn.Do("LPUSH", key, val))
+}
+
+func RedisListRPush(key string, val interface{}) (int, error) {
+	redisconn, err := GetRedisConn()
+	if err != nil {
+		return -1, err
+	}
+	defer redisconn.Close()
+	return redis.Int(redisconn.Do("RPUSH", key, val))
+}
+
+func RedisListLen(key string) (int, error) {
+	redisconn, err := GetRedisConn()
+	if err != nil {
+		return -1, err
+	}
+	defer redisconn.Close()
+	return redis.Int(redisconn.Do("LLEN", key))
+}
+
+func RedisListRange(key string, begin, end int) ([]string, error) {
+	redisconn, err := GetRedisConn()
+	if err != nil {
+		return []string{}, err
+	}
+	defer redisconn.Close()
+	return redis.Strings(redisconn.Do("LRANGE", key, begin, end))
 }
