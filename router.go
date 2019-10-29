@@ -1,9 +1,15 @@
 package lego
 
 import (
+	"fmt"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
-	"sync"
+	"encoding/json"
+	"log"
+	"reflect"
+	"runtime"
+	"strings"
+	"sync" 
 	"errors"
 )
 
@@ -154,4 +160,94 @@ func APIGETWITHOUTSIGN(path string, h fasthttp.RequestHandler) {
 func WEBSOCKET(path string, h fasthttp.RequestHandler) {
 	LogPrintln("API Register: WEBSOCKET :\t" + path)
 	_websockMaper[path] = h
+}
+
+func POST_4(path string, fn interface{}, sessionType int,checksession bool) {
+	LogPrintln("Route Register: POST_4:\t" + path)
+
+
+	//useName := true
+	f, ok := fn.(reflect.Value)
+	if !ok {
+		f = reflect.ValueOf(fn)
+	}
+	if f.Kind() != reflect.Func {
+		return //"", errors.New("function must be func or bound method")
+	}
+
+	fname := runtime.FuncForPC(reflect.Indirect(f).Pointer()).Name()
+	if fname != "" {
+		i := strings.LastIndex(fname, ".")
+		if i >= 0 {
+			fname = fname[i+1:]
+		}
+	}
+	/*if useName {
+		fname = name
+	}*/
+	if fname == "" {
+		errorStr := "rpcx.registerFunction: no func name for type " + f.Type().String()
+		log.Println(errorStr)
+		return //fname, errors.New(errorStr)
+	}
+
+	t := f.Type()
+	if t.NumIn() != 2 {
+		return //fname, fmt.Errorf("rpcx.registerFunction: has wrong number of ins: %s", f.Type().String())
+	}
+	if t.NumOut() != 0 {
+		return //fname, fmt.Errorf("rpcx.registerFunction: has wrong number of outs: %s", f.Type().String())
+	}
+
+	// First arg must be context.Context
+	ctxType := t.In(0)
+	ctxType = ctxType
+	/*if !ctxType.Implements(typeOfContext) {
+		return //fname, fmt.Errorf("function %s must use context as  the first parameter", f.Type().String())
+	}*/
+
+	argType := t.In(1)
+	argType = argType
+	var argv reflect.Value
+	if argType.Kind() == reflect.Ptr { // reply must be ptr
+		argv = reflect.New(argType.Elem())
+	} else {
+		argv = reflect.New(argType)
+	}
+	fmt.Printf("argType: %v", argv.Interface())
+	/*if !isExportedOrBuiltinType(argType) {
+		return //fname, fmt.Errorf("function %s parameter type not exported: %v", f.Type().String(), argType)
+	}*/
+
+	//replyType := t.In(2)
+	//replyType = replyType
+	/*if replyType.Kind() != reflect.Ptr {
+		return //fname, fmt.Errorf("function %s reply type not a pointer: %s", f.Type().String(), replyType)
+	}*/
+	/*if !isExportedOrBuiltinType(replyType) {
+		return //fname, fmt.Errorf("function %s reply type not exported: %v", f.Type().String(), replyType)
+	}*/
+
+	// The return type of the method must be error.
+	/*if returnType := t.Out(0); returnType != typeOfError {
+		return //fname, fmt.Errorf("function %s returns %s, not error", f.Type().String(), returnType.String())
+	}*/
+    type vcHandle func(*fasthttp.RequestCtx, interface{})
+
+
+	h := func(ctx *fasthttp.RequestCtx) {
+
+		requestByte := ctx.PostBody()
+		v := argv.Interface()
+		err := json.Unmarshal(requestByte, &v)
+		err = err
+		//放置解析函数
+		fmt.Printf("POST_4 f:%v \n", argType)
+
+		//f1 := fn.(vcHandle)
+		f.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(v)})
+		//f1(ctx, argType)
+		//h(ctx)
+	}
+	POST(path, h, sessionType, checksession)
 }
