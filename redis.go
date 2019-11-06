@@ -269,32 +269,38 @@ func RedisGeoAdd(key string, lat, lng float64, id string) (int, error) {
 	return redis.Int(redisconn.Do("GEOADD", key, lng, lat, id))
 }
 
-func RedisGeoPos(key, id string) ([]string, error) {
+func RedisGeoPos(key, id string) (lat, lng float64, err error) {
 	redisconn, err := GetRedisConn()
 	if err != nil {
-		return []string{}, err
+		return 0, 0, err
 	}
 	defer redisconn.Close()
-	return redis.Strings(redisconn.Do("GEOPOS", key, id))
+	rt, err := redis.Positions(redisconn.Do("GEOPOS", key, id))
+	//TODO: 这地方有bug，fmt.Println(err ) //fmt.Println(rt )
+	if err == nil && rt != nil && len(rt) > 0 && rt[0] != nil {
+		return rt[0][1], rt[0][0], nil
+	} else {
+		return 0, 0, errors.New("RedisGeoPos error ")
+	}
 }
 
-func RedisGeoDist(key, id string) ([]string, error) {
+func RedisGeoDist(key, id1, id2 string) ([]string, error) {
 	redisconn, err := GetRedisConn()
 	if err != nil {
 		return []string{}, err
 	}
 	defer redisconn.Close()
-	return redis.Strings(redisconn.Do("GEODIST", key, fmt.Sprintf("%d", id)))
+	return redis.Strings(redisconn.Do("GEODIST", key, id1,id2))
 }
 
 // 半径内元素个数
-func RedisGeoRadius(key string, lat, lng, radius float64) ([]string, error) {
+func RedisGeoRadius(key string, lat, lng float64, radius int) ([]string, error) {
 	redisconn, err := GetRedisConn()
 	if err != nil {
 		return []string{}, err
 	}
 	defer redisconn.Close()
-	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "KM", "WITHDIST WITHCOORD ASC"))
+	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "km", "ASC", "COUNT", 5))
 }
 
 // 列表相关

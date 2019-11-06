@@ -98,8 +98,8 @@ func SessionGetKeyIntVal(key string, ctx *fasthttp.RequestCtx) int64 {
 	sessValues := sess.GetAll()         // get all values from this session
 	// fmt.Println("session: %s\n", sessValues)
 
-	keyval := sessValues[key]
-	if keyval != nil {
+	keyval ,ok := sessValues[key]
+	if ok && keyval != nil {
 		return keyval.(int64)
 	} else {
 		return -1

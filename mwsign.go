@@ -24,7 +24,6 @@ func middlewareCheckApiSign(next fasthttp.RequestHandler) fasthttp.RequestHandle
 
 		keys := make([]string, 0)
 		args.VisitAll(func(key, val []byte) {
-			LogInfo("key=" + string(key))
 			keys = append(keys, string(key))
 		})
 
@@ -67,9 +66,9 @@ func doCheckSign(keys []string, args *fasthttp.Args) bool {
 	}
 	ptext += signkey
 
+	LogInfo("ser-ptext=" + ptext)
 	sersign := utils.Md5(ptext)
 	if sersign != sign {
-		LogError("ser-ptext=" + ptext)
 		LogError("ser-sign=" + sersign)
 		LogError("clt-sign=" + sign)
 		return false
