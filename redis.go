@@ -276,7 +276,9 @@ func RedisGeoPos(key, id string) (lat, lng float64, err error) {
 	}
 	defer redisconn.Close()
 	rt, err := redis.Positions(redisconn.Do("GEOPOS", key, id))
-	//TODO: 这地方有bug，fmt.Println(err ) //fmt.Println(rt )
+	//TODO: 这地方有bug，
+	fmt.Println(err )
+	fmt.Println(rt )
 	if err == nil && rt != nil && len(rt) > 0 && rt[0] != nil {
 		return rt[0][1], rt[0][0], nil
 	} else {
@@ -301,6 +303,18 @@ func RedisGeoRadius(key string, lat, lng float64, radius int) ([]string, error) 
 	}
 	defer redisconn.Close()
 	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "km", "ASC", "COUNT", 5))
+}
+
+/*
+ * SET集合删除成员
+ */
+func RedisGeoRemove(setkey string, members ...string) (int, error) {
+	redisconn, err := GetRedisConn()
+	if err != nil {
+		return 0, err
+	}
+	defer redisconn.Close()
+	return redis.Int(redisconn.Do("ZREM", redis.Args{}.Add(setkey).AddFlat(members)...))
 }
 
 // 列表相关

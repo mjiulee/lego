@@ -66,7 +66,7 @@ func doCheckSign(keys []string, args *fasthttp.Args) bool {
 	}
 	ptext += signkey
 
-	LogInfo("ser-ptext=" + ptext)
+	//LogInfo("ser-ptext=" + ptext)
 	sersign := utils.Md5(ptext)
 	if sersign != sign {
 		LogError("ser-sign=" + sersign)
