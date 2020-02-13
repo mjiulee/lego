@@ -3,19 +3,28 @@ package lego
 import (
 	"fmt"
 	"github.com/bwmarrin/snowflake"
+	"sync"
 )
+
+var _snowflakeNodeOnce sync.Once
+var _node *snowflake.Node
+
+func nodeInstance() *snowflake.Node {
+	_snowflakeNodeOnce.Do(func() {
+		anode, err := snowflake.NewNode(1)
+		if err != nil {
+			panic(err)
+		}
+		_node = anode
+	})
+	return _node
+}
 
 /*
  * 分布式-雪花uuid
  */
 func UUID() int64 {
-	// Create a new Node with a Node number of 1
-	node, err := snowflake.NewNode(1)
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-	id := node.Generate()
+	id := nodeInstance().Generate()
 	return id.Int64()
 }
 
