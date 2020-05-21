@@ -22,7 +22,7 @@ func (sv *Server) Start(port , appname string) {
 	server := &fasthttp.Server{
 		Handler: GetRequestHandler,
 		Name: appname,
-		MaxRequestBodySize: 1024 * 30* 1024, //byte
+		MaxRequestBodySize: 1024 * 300 * 1024, //byte
 	}
 	err := server.ListenAndServe(":"+port)
 	if nil != err {
@@ -94,7 +94,7 @@ func (sv *Server) routeStatic(prefix, root string) {
  * params
 */
 func (sv *Server) acceptFileType(suffix string) (accept bool) {
-	exts := []string{".zip", ".html", ".gif", ".css", ".js",".txt", ".jpeg", ".jpg", ".bmp",".png", ".mp3", ".pcm", ".silk",".xlsx",".woff2", ".map", ".woff", "ttf", ".pem", ".apk", ".pdf", ".json"}
+	exts := []string{".wav",".zip", ".html", ".gif", ".css", ".js",".txt", ".jpeg", ".jpg", ".bmp",".png", ".mp3",".mp4", ".pcm", ".silk",".xlsx",".woff2", ".map", ".woff", "ttf", ".pem", ".apk", ".pdf", ".json"}
 
 	canaccept := false
 	for _, ext := range exts {

@@ -57,6 +57,19 @@ func (self *RequestCtxExtent) XML(dataMap map[string]string) {
 }
 
 /* ******************************************** */
+/* HTML
+* @parsm
+	name --- 文件路径
+*/
+func (self *RequestCtxExtent) PureHTML(name string) {
+	self.Response.Header.Set("Content-Type","text/html; charset=utf-8")
+	err := self.Response.SendFile("modules/" + name)
+	if err != nil {
+		LogError(err)
+	}
+}
+
+/* ******************************************** */
 /* pongo2 模板支持，定义rander类，以做界面模板显示处理 */
 
 /* HTML
@@ -201,7 +214,7 @@ func getWebRender() *Render {
 
 func GoFloatWrap(val float64, jd int) string {
 	fstr := "%0." + fmt.Sprintf("%d", jd) + "f"
-	fmt.Println(fstr);
+	fmt.Println(fstr)
 	return fmt.Sprintf(fstr, val)
 }
 

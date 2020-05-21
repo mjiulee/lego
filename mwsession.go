@@ -1,6 +1,7 @@
 package lego
 
 import (
+	"time"
 	//"encoding/json"
 	"github.com/mjiulee/go-sessions"
 	"github.com/valyala/fasthttp"
@@ -27,6 +28,14 @@ func middlewareAdminCheckSession(next fasthttp.RequestHandler) fasthttp.RequestH
 		sessValues := sess.GetAll() // get all values from this session
 		isRedirect := false
 		for {
+			ltime, ok := sessValues["ltime"]
+			if ok {
+				if ltime.(int64)+7200 < time.Now().Unix() {
+					sessions.DestroyByID(sess.ID())
+					isRedirect = true
+					break
+				}
+			}
 			userid := sessValues["user_id"]
 			if userid != nil {
 				next(ctx)
@@ -51,6 +60,14 @@ func middlewareWebCheckSession(next fasthttp.RequestHandler) fasthttp.RequestHan
 		sessValues := sess.GetAll() // get all values from this session
 		isRedirect := false
 		for {
+			ltime, ok := sessValues["ltime"]
+			if ok {
+				if ltime.(int64)+7200 < time.Now().Unix() {
+					sessions.DestroyByID(sess.ID())
+					isRedirect = true
+					break
+				}
+			}
 			userid := sessValues["user_id"]
 			if userid != nil {
 				next(ctx)
@@ -75,6 +92,14 @@ func middlewareWapCheckSession(next fasthttp.RequestHandler) fasthttp.RequestHan
 		sessValues := sess.GetAll() // get all values from this session
 		isRedirect := false
 		for {
+			ltime, ok := sessValues["ltime"]
+			if ok {
+				if ltime.(int64)+7200 < time.Now().Unix() {
+					sessions.DestroyByID(sess.ID())
+					isRedirect = true
+					break
+				}
+			}
 			userid := sessValues["user_id"]
 			if userid != nil {
 				next(ctx)

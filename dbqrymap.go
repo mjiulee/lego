@@ -48,7 +48,7 @@ func QueryListByMap(qmap map[string]interface{}) ([]map[string]string, int64, er
 	}
 
 	total := int64(0)
-	// list, err := GetDBEngine().SQL(sql).QueryInterface(params...)
+	//list, err := GetDBEngine().SQL(sql).QueryInterface(params...)
 	list, err := GetDBEngine().SQL(sql).QueryString(params...)
 	if err != nil {
 		LogError(err)
@@ -273,10 +273,17 @@ func getWhereFromQmap(qmap map[string]interface{}) (string, []interface{}, error
 		if ok {
 			for k, v := range searchmap {
 				if len(v) > 0 {
-					tw := fmt.Sprintf("( %s LIKE ? )", k)
+					tv := v
+					if strings.Index(v, "%") < 0 {
+						tv = "%" + v + "%"
+					}
+					tw := fmt.Sprintf("( %s LIKE '%s' )", k, tv)
 					searcharray = append(searcharray, tw)
-					likestr := "%" + v + "%"
-					params = append(params, likestr)
+					//if strings.Index(v, "%") > 0 {
+					//	params = append(params, v)
+					//} else {
+					//	params = append(params, "%"+v+"%")
+					//}
 				}
 			}
 		}
@@ -376,7 +383,7 @@ func GetSqlByWhereFeildList(wheremap []QMapWhereField) (string, []interface{}, e
 					if len(s.Index(i).Interface().(string)) <= 0 {
 						continue
 					}
-					tw := fmt.Sprintf(" %s LIKE '%v' ", v.FieldName, s.Index(i).Interface())
+					tw := fmt.Sprintf(" %s LIKE '%s' ", v.FieldName, s.Index(i).String())
 					torlist = append(torlist, tw)
 					//params = append(params, s.Index(i).Interface())
 				}
@@ -389,7 +396,7 @@ func GetSqlByWhereFeildList(wheremap []QMapWhereField) (string, []interface{}, e
 				if len(s.String()) <= 0 {
 					continue
 				}
-				tw := fmt.Sprintf(" %s LIKE %s ", v.FieldName, v.Param)
+				tw := fmt.Sprintf(" %s LIKE '%s' ", v.FieldName, v.Param)
 				wherearray = append(wherearray, tw)
 				//params = append(params, v.Param)
 				joinArray = append(joinArray, v.CombineWith)

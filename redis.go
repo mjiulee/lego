@@ -286,13 +286,13 @@ func RedisGeoPos(key, id string) (lat, lng float64, err error) {
 	}
 }
 
-func RedisGeoDist(key, id1, id2 string) ([]string, error) {
+func RedisGeoDist(key, id1, id2 string) (string, error) {
 	redisconn, err := GetRedisConn()
 	if err != nil {
-		return []string{}, err
+		return "", err
 	}
 	defer redisconn.Close()
-	return redis.Strings(redisconn.Do("GEODIST", key, id1,id2))
+	return redis.String(redisconn.Do("GEODIST", key, id1,id2))
 }
 
 // 半径内元素个数
@@ -302,7 +302,7 @@ func RedisGeoRadius(key string, lat, lng float64, radius int) ([]string, error) 
 		return []string{}, err
 	}
 	defer redisconn.Close()
-	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "km", "ASC", "COUNT", 5))
+	return redis.Strings(redisconn.Do("GEORADIUS", key, lng, lat, radius, "km", "ASC", "COUNT", 20))
 }
 
 /*

@@ -58,7 +58,7 @@ func SetUpSourceDatabase(sourceName string, dbUrls []string, prefix, isdefault b
 		os.Exit(-1)
 	}
 
-	// egroup.ShowSQL(true)
+	egroup.ShowSQL(false)
 	_engineMap[sourceName] = egroup
 	if isdefault {
 		_defaultEnginName = sourceName
