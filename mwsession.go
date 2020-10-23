@@ -144,3 +144,14 @@ func SessionGetKeyStringVal(key string, ctx *fasthttp.RequestCtx) string {
 		return ""
 	}
 }
+
+// 通过content获取user_id
+func SessionGetKeyVal(key string, ctx *fasthttp.RequestCtx) interface{} {
+	sess := sessions.StartFasthttp(ctx) // init the session
+	//sessValues := sess.GetAll()         // get all values from this session
+	// fmt.Println("session: %s\n", sessValues)
+
+	//keyval := sessValues[key]
+	keyval := sess.Get(key)
+	return keyval
+}
