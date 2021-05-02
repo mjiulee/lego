@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/mjiulee/lego/logger"
 )
 
 /**/
@@ -44,20 +46,20 @@ func QueryListByMap(qmap map[string]interface{}) ([]map[string]string, int64, er
 	}
 
 	if GetDBEngine().Logger().IsShowSQL() {
-		LogInfo(fmt.Sprintf("\n%s\t%v", sql, params))
+		logger.LogInfo(fmt.Sprintf("\n%s\t%v", sql, params))
 	}
 
 	total := int64(0)
 	//list, err := GetDBEngine().SQL(sql).QueryInterface(params...)
 	list, err := GetDBEngine().SQL(sql).QueryString(params...)
 	if err != nil {
-		LogError(err)
+		logger.LogError(err)
 		return list, total, errors.New(err.Error() + sql)
 	}
 
 	total, err = GetDBEngine().SQL(csql, params...).Count()
 	if err != nil {
-		LogError(err)
+		logger.LogError(err)
 		return list, total, errors.New(err.Error() + sql)
 	}
 
@@ -222,50 +224,50 @@ func getWhereFromQmap(qmap map[string]interface{}) (string, []interface{}, error
 		}
 	}
 
-	// 数据权限过滤
-	datafilter, ok := qmap["dataright"]
-	if ok {
-		for {
-			fieldlist, ok1 := datafilter.([]QMapWhereField)
-			condition, ok2 := datafilter.(QryConditions)
-			conditionList, ok3 := datafilter.([]QryConditions)
-			if !ok1 && !ok2 && !ok3 {
-				break
-			}
-			if ok1 {
-				tsql, tparam, err := GetSqlByWhereFeildList(fieldlist)
-				if err != nil {
-					return "", params, err
-				}
-				if len(tsql) > 0 {
-					wherearray = append(wherearray, tsql)
-					params = append(params, tparam...)
-				}
-			}
-			if ok2 {
-				tsql, tparam, err := GetSqlByCondition(&condition)
-				if err != nil {
-					return "", params, err
-				}
-				if len(tsql) > 0 {
-					wherearray = append(wherearray, tsql)
-					params = append(params, tparam...)
-				}
-			}
+	// // 数据权限过滤
+	// datafilter, ok := qmap["dataright"]
+	// if ok {
+	// 	for {
+	// 		fieldlist, ok1 := datafilter.([]QMapWhereField)
+	// 		condition, ok2 := datafilter.(QryConditions)
+	// 		conditionList, ok3 := datafilter.([]QryConditions)
+	// 		if !ok1 && !ok2 && !ok3 {
+	// 			break
+	// 		}
+	// 		if ok1 {
+	// 			tsql, tparam, err := GetSqlByWhereFeildList(fieldlist)
+	// 			if err != nil {
+	// 				return "", params, err
+	// 			}
+	// 			if len(tsql) > 0 {
+	// 				wherearray = append(wherearray, tsql)
+	// 				params = append(params, tparam...)
+	// 			}
+	// 		}
+	// 		if ok2 {
+	// 			tsql, tparam, err := GetSqlByCondition(&condition)
+	// 			if err != nil {
+	// 				return "", params, err
+	// 			}
+	// 			if len(tsql) > 0 {
+	// 				wherearray = append(wherearray, tsql)
+	// 				params = append(params, tparam...)
+	// 			}
+	// 		}
 
-			if ok3 {
-				tsql, tparam, err := GetSqlByConditionGroup(conditionList)
-				if err != nil {
-					return "", params, err
-				}
-				if len(tsql) > 0 {
-					wherearray = append(wherearray, tsql)
-					params = append(params, tparam...)
-				}
-			}
-			break
-		}
-	}
+	// 		if ok3 {
+	// 			tsql, tparam, err := GetSqlByConditionGroup(conditionList)
+	// 			if err != nil {
+	// 				return "", params, err
+	// 			}
+	// 			if len(tsql) > 0 {
+	// 				wherearray = append(wherearray, tsql)
+	// 				params = append(params, tparam...)
+	// 			}
+	// 		}
+	// 		break
+	// 	}
+	// }
 
 	searchptr, ok := qmap["search"]
 	if ok {

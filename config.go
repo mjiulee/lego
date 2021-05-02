@@ -1,10 +1,10 @@
 package lego
 
 import (
-	"fmt"
+	"sync"
+
 	"github.com/go-ini/ini"
 	"github.com/mjiulee/lego/utils"
-	"sync"
 )
 
 //var _envinifile *ini.File
@@ -57,8 +57,7 @@ func doLoad() {
 
 	cfg, err := ini.Load([]byte(""), inifilepaty)
 	if err != nil {
-		fmt.Println(err)
-		panic("read config from ini fail...")
+		panic("read config from ini fail..." + err.Error())
 	}
 	_appinifile = cfg
 }

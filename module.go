@@ -3,6 +3,8 @@ package lego
 import (
 	"fmt"
 	"sync"
+
+	"github.com/mjiulee/lego/logger"
 )
 
 /** 为了不同业务能以插件方式进行引入，需要定义一些接口，让注册到vctrl */
@@ -28,10 +30,11 @@ func ModuleRegist(m GGModule) {
 
 /* 显示加载了那些模块 */
 func ShowSysModules() {
-	fmt.Println("module init")
-	fmt.Println("********************************************************")
+	logger.LogInfo("module init")
+	logger.LogInfo("********************************************************")
 	for i := 0; i < len(_ggmodulsList); i++ {
-		fmt.Printf("模块:%s\n版本：%s\n备注：%s\r\n", _ggmodulsList[i].Name(), _ggmodulsList[i].Version(), _ggmodulsList[i].Info())
+		info := fmt.Sprintf("\n模块:%s\n版本：%s\n备注：%s\r\n", _ggmodulsList[i].Name(), _ggmodulsList[i].Version(), _ggmodulsList[i].Info())
+		logger.LogInfo(info)
 	}
-	fmt.Println("********************************************************")
+	logger.LogInfo("********************************************************")
 }

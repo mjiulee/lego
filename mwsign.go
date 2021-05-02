@@ -1,9 +1,11 @@
 package lego
 
 import (
+	"sort"
+
+	"github.com/mjiulee/lego/logger"
 	"github.com/mjiulee/lego/utils"
 	"github.com/valyala/fasthttp"
-	"sort"
 )
 
 const ()
@@ -52,7 +54,7 @@ func doCheckSign(keys []string, args *fasthttp.Args) bool {
 
 	sign := string(args.Peek("sign"))
 	if len(sign) <= 0 {
-		LogError("sign参数确失")
+		logger.LogError("sign参数确失")
 		return false
 	}
 
@@ -66,11 +68,11 @@ func doCheckSign(keys []string, args *fasthttp.Args) bool {
 	}
 	ptext += signkey
 
-	//LogInfo("ser-ptext=" + ptext)
+	logger.LogError("ser-ptext=" + ptext)
 	sersign := utils.Md5(ptext)
 	if sersign != sign {
-		LogError("ser-sign=" + sersign)
-		LogError("clt-sign=" + sign)
+		logger.LogError("ser-sign=" + sersign)
+		logger.LogError("clt-sign=" + sign)
 		return false
 	}
 	return true

@@ -1,16 +1,18 @@
 package lego
 
 import (
-	"fmt"
-	"github.com/buaazp/fasthttprouter"
-	"github.com/valyala/fasthttp"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"reflect"
 	"runtime"
 	"strings"
-	"sync" 
-	"errors"
+	"sync"
+
+	"github.com/buaazp/fasthttprouter"
+	"github.com/mjiulee/lego/logger"
+	"github.com/valyala/fasthttp"
 )
 
 var _router *fasthttprouter.Router
@@ -25,10 +27,9 @@ func GetRouter() *fasthttprouter.Router {
 	_routerOnce.Do(func() {
 		_router = fasthttprouter.New()
 		_router.PanicHandler = func(ctx *fasthttp.RequestCtx, i interface{}) {
-			LogError(i)
-			LogPanicTrace(8)
+			logger.LogError(i)
+			logger.LogPanicTrace(8)
 		}
-		// websocket handeler
 		_websockMaper = make(map[string]fasthttp.RequestHandler)
 	})
 	return _router
@@ -39,7 +40,7 @@ func GetRequestHandler(ctx *fasthttp.RequestCtx) {
 	path := string(ctx.Path())
 	if h, ok := _websockMaper[path]; ok {
 		h(ctx)
-	}else{
+	} else {
 		_router.Handler(ctx)
 	}
 }
@@ -50,19 +51,10 @@ func GetRequestHandler(ctx *fasthttp.RequestCtx) {
 	@h 	  -- 处理handler
 	@checktoken -- 是否校验token
 */
-func GET(path string, h fasthttp.RequestHandler, sessionType int, checksession bool) {
-	LogPrintln("Route Register: GET:\t" + path)
+func GET(path string, h fasthttp.RequestHandler, checksession bool) {
+	logger.LogPrintln("Route Register: GET:\t" + path)
 	if checksession {
-		if sessionType == LEGO_SESSION_TYPE_ADMIN {
-			h = middlewareAdminCheckSession(h)
-		}else if sessionType == LEGO_SESSION_TYPE_WEB {
-			h = middlewareWebCheckSession(h)
-		}else if sessionType == LEGO_SESSION_TYPE_WEB {
-			h = middlewareWapCheckSession(h)
-		}else{
-			panic(errors.New("PLEASE SET THE SESSION TYPE"))
-		}
-
+		h = middlewareCheckSession(h)
 	}
 	h = middlewareIPBlock(h)
 	h = middlewareAccessLog(h)
@@ -75,18 +67,10 @@ func GET(path string, h fasthttp.RequestHandler, sessionType int, checksession b
 	@h 	  -- 处理handler
 	@checktoken -- 是否校验token
 */
-func POST(path string, h fasthttp.RequestHandler, sessionType int,checksession bool) {
-	LogPrintln("Route Register: POST:\t" + path)
+func POST(path string, h fasthttp.RequestHandler, checksession bool) {
+	logger.LogPrintln("Route Register: POST:\t" + path)
 	if checksession {
-		if sessionType == LEGO_SESSION_TYPE_ADMIN {
-			h = middlewareAdminCheckSession(h)
-		}else if sessionType == LEGO_SESSION_TYPE_WEB {
-			h = middlewareWebCheckSession(h)
-		}else if sessionType == LEGO_SESSION_TYPE_WEB {
-			h = middlewareWapCheckSession(h)
-		}else{
-			panic(errors.New("PLEASE SET THE SESSION TYPE"))
-		}
+		h = middlewareCheckSession(h)
 	}
 	h = middlewareIPBlock(h)
 	h = middlewareCROS(h)
@@ -103,9 +87,9 @@ func POST(path string, h fasthttp.RequestHandler, sessionType int,checksession b
 	@checkip 	-- 是否检查调用方ip
 */
 func APIGET(path string, h fasthttp.RequestHandler, checktoken bool) {
-	LogPrintln("API Register: GET:\t" + path)
+	logger.LogPrintln("API Register: GET:\t" + path)
 	if checktoken {
-		h = middlewareCheckAuthToken(h)
+		h = middlewareCheckSession(h)
 	}
 
 	h = middlewareCheckApiSign(h)
@@ -122,7 +106,7 @@ func APIGET(path string, h fasthttp.RequestHandler, checktoken bool) {
 	@checktoken -- 是否校验token
 */
 func APIPOST(path string, h fasthttp.RequestHandler, checktoken bool) {
-	LogPrintln("API Register: POST:\t" + path)
+	logger.LogPrintln("API Register: POST:\t" + path)
 	if checktoken {
 		h = middlewareCheckAuthToken(h)
 	}
@@ -137,7 +121,7 @@ func APIPOST(path string, h fasthttp.RequestHandler, checktoken bool) {
 
 /*  一些默认不需要签名的接口 */
 func APIPOSTWITHOUTSIGN(path string, h fasthttp.RequestHandler) {
-	LogPrintln("API Register: POST:\t" + path)
+	logger.LogPrintln("API Register: POST:\t" + path)
 	h = middlewareIPBlock(h)
 	h = middlewareAccessLog(h)
 	GetRouter().POST(path, h)
@@ -145,7 +129,7 @@ func APIPOSTWITHOUTSIGN(path string, h fasthttp.RequestHandler) {
 
 /*  一些默认不需要签名的接口 */
 func APIGETWITHOUTSIGN(path string, h fasthttp.RequestHandler) {
-	LogPrintln("API Register: GET:\t" + path)
+	logger.LogPrintln("API Register: GET:\t" + path)
 	h = middlewareIPBlock(h)
 	h = middlewareAccessLog(h)
 	GetRouter().GET(path, h)
@@ -158,7 +142,7 @@ func APIGETWITHOUTSIGN(path string, h fasthttp.RequestHandler) {
 	@checktoken -- 是否校验token
 */
 func WEBSOCKET(path string, h fasthttp.RequestHandler) {
-	LogPrintln("API Register: WEBSOCKET :\t" + path)
+	logger.LogPrintln("API Register: WEBSOCKET :\t" + path)
 	_websockMaper[path] = h
 }
 
@@ -181,10 +165,9 @@ func (vc *Test_modeCtrl) ListJson2(Ctx *fasthttp.RequestCtx, Args *Args) {
     fmt.Printf("ListJson2: %v", Args)
 }
 
- */
-func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
-	LogPrintln("Route Register: POSTv2:\t" + path)
-
+*/
+func POSTv2(path string, fn interface{}, checksession bool) {
+	logger.LogPrintln("Route Register: POSTv2:\t" + path)
 
 	//useName := true
 	f, ok := fn.(reflect.Value)
@@ -193,7 +176,6 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 	}
 	if f.Kind() != reflect.Func {
 		panic(errors.New("function must be func or bound method"))
-		return //"", errors.New("function must be func or bound method")
 	}
 
 	fname := runtime.FuncForPC(reflect.Indirect(f).Pointer()).Name()
@@ -210,29 +192,26 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 		errorStr := "rpcx.registerFunction: no func name for type " + f.Type().String()
 		log.Println(errorStr)
 		panic(errors.New(errorStr))
-		return //fname, errors.New(errorStr)
 	}
 
 	t := f.Type()
 	if t.NumIn() != 2 {
 		panic(fmt.Errorf("registerFunction: has wrong number of ins: %s", f.Type().String()))
-		return //fname, fmt.Errorf("rpcx.registerFunction: has wrong number of ins: %s", f.Type().String())
 	}
 	if t.NumOut() != 0 {
 		panic(fmt.Errorf("registerFunction: has wrong number of outs: %s", f.Type().String()))
-		return //fname, fmt.Errorf("rpcx.registerFunction: has wrong number of outs: %s", f.Type().String())
 	}
 
 	// First arg must be context.Context
-	ctxType := t.In(0)
+	/*ctxType := t.In(0)
 	ctxType = ctxType
-	/*if !ctxType.Implements(typeOfContext) {
+	if !ctxType.Implements(typeOfContext) {
 		return //fname, fmt.Errorf("function %s must use context as  the first parameter", f.Type().String())
 	}*/
 
 	argType := t.In(1)
-	argType = argType
-	/*var argv reflect.Value
+	/*argType = argType
+	var argv reflect.Value
 	if argType.Kind() == reflect.Ptr { // reply must be ptr
 		argv = reflect.New(argType.Elem())
 	} else {
@@ -243,8 +222,8 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 		return //fname, fmt.Errorf("function %s parameter type not exported: %v", f.Type().String(), argType)
 	}*/
 
-	//replyType := t.In(2)
-	//replyType = replyType
+	/*replyType := t.In(2)
+	replyType = replyType
 	/*if replyType.Kind() != reflect.Ptr {
 		return //fname, fmt.Errorf("function %s reply type not a pointer: %s", f.Type().String(), replyType)
 	}*/
@@ -256,8 +235,7 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 	/*if returnType := t.Out(0); returnType != typeOfError {
 		return //fname, fmt.Errorf("function %s returns %s, not error", f.Type().String(), returnType.String())
 	}*/
-    type vcHandle func(*fasthttp.RequestCtx, interface{})
-
+	// type vcHandle func(*fasthttp.RequestCtx, interface{})
 
 	h := func(ctx *fasthttp.RequestCtx) {
 		ctxExt := RequestCtxExtent{ctx}
@@ -272,8 +250,6 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 		}
 		v := argv.Interface()
 		err := json.Unmarshal(requestByte, v)
-
-		err = err
 		if err != nil {
 			response := make(map[string]interface{})
 			code := -1
@@ -290,12 +266,11 @@ func POSTv2(path string, fn interface{}, sessionType int,checksession bool) {
 		//f1(ctx, argType)
 		//h(ctx)
 	}
-	POST(path, h, sessionType, checksession)
+	POST(path, h, checksession)
 }
 
 func APIPOSTv2(path string, fn interface{}, checktoken bool) {
-	LogPrintln("Route Register: APIPOSTv2:\t" + path)
-
+	logger.LogPrintln("Route Register: APIPOSTv2:\t" + path)
 
 	//useName := true
 	f, ok := fn.(reflect.Value)
@@ -350,8 +325,6 @@ func APIPOSTv2(path string, fn interface{}, checktoken bool) {
 		argv = reflect.New(argType)
 	}*/
 
-
-
 	//fmt.Printf("argType: %v", argv.Interface())
 	/*if !isExportedOrBuiltinType(argType) {
 		return //fname, fmt.Errorf("function %s parameter type not exported: %v", f.Type().String(), argType)
@@ -371,7 +344,6 @@ func APIPOSTv2(path string, fn interface{}, checktoken bool) {
 		return //fname, fmt.Errorf("function %s returns %s, not error", f.Type().String(), returnType.String())
 	}*/
 	type vcHandle func(*fasthttp.RequestCtx, interface{})
-
 
 	h := func(ctx *fasthttp.RequestCtx) {
 		ctxExt := RequestCtxExtent{ctx}

@@ -1,11 +1,15 @@
 package lego
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"os"
 	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/mjiulee/lego/logger"
 	"xorm.io/core"
+
 )
 
 // 多数据源的情况
@@ -19,6 +23,13 @@ func init() {
 	__cconce.Do(func() {
 		_engineMap = make(map[string]*xorm.EngineGroup, 0)
 	})
+}
+
+func DBEngineClose() {
+	logger.LogError("Database connect close")
+	for k, _ := range _engineMap {
+		_engineMap[k].Close()
+	}
 }
 
 /* 获取数据库引擎对象 */
@@ -39,14 +50,19 @@ func GetDBEngineByName(sourceName string) *xorm.EngineGroup {
 	return nil
 }
 
-func SetUpSourceDatabase(sourceName string, dbUrls []string, prefix, isdefault bool) {
+func SetUpSourceDatabase(dbtype, sourceName string, dbUrls []string, prefix, isdefault bool) {
 	// 使用xorm-plus
-	egroup, err := xorm.NewEngineGroup("mysql", dbUrls, xorm.LeastConnPolicy())
+	egroup, err := xorm.NewEngineGroup(dbtype, dbUrls, xorm.LeastConnPolicy())
 	if err != nil {
 		//log.Panic(err)
-		LogError(err)
+		logger.LogError(err)
 		os.Exit(-1)
 	}
+
+	// 设置日志
+	alogger := logger.XormWrapLogger{}
+	alogger.ShowSQL(true)
+	egroup.SetLogger(alogger)
 
 	if prefix {
 		tbMapper := core.NewPrefixMapper(core.SnakeMapper{}, "tb_")
@@ -54,11 +70,9 @@ func SetUpSourceDatabase(sourceName string, dbUrls []string, prefix, isdefault b
 	}
 
 	if err = egroup.Ping(); err != nil {
-		LogError(err)
+		logger.LogError(err)
 		os.Exit(-1)
 	}
-
-	egroup.ShowSQL(false)
 	_engineMap[sourceName] = egroup
 	if isdefault {
 		_defaultEnginName = sourceName
@@ -75,7 +89,7 @@ func DoSynBeans(sourceName string) {
 	// 初始化数据库引擎
 	err := GetDBEngine().Sync2(_beanlist...)
 	if nil != err {
-		LogError("数据库同步失败，请检查model配置" + err.Error())
+		logger.LogError("数据库同步失败，请检查model配置" + err.Error())
 		os.Exit(-1)
 	}
 }

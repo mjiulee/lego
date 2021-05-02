@@ -2,14 +2,10 @@ package lego
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
-	"path"
 
-	"github.com/flosch/pongo2"
-	"github.com/valyala/fasthttp"
-
+	"github.com/mjiulee/lego/logger"
 	"github.com/mjiulee/lego/utils"
+	"github.com/valyala/fasthttp"
 )
 
 type RequestCtxExtent struct {
@@ -61,163 +57,165 @@ func (self *RequestCtxExtent) XML(dataMap map[string]string) {
 * @parsm
 	name --- 文件路径
 */
-func (self *RequestCtxExtent) PureHTML(name string) {
-	self.Response.Header.Set("Content-Type","text/html; charset=utf-8")
-	err := self.Response.SendFile("modules/" + name)
+func (self *RequestCtxExtent) PureHTML(fpath string) {
+	self.Response.Header.Set("Content-Type", "text/html; charset=utf-8")
+	// TODO: when debug uncache the html file
+	// err := self.Response.SendFile("modules/" + name)
+	err := self.Response.SendFile(fpath)
 	if err != nil {
-		LogError(err)
+		logger.LogError(err)
 	}
 }
 
-/* ******************************************** */
-/* pongo2 模板支持，定义rander类，以做界面模板显示处理 */
+// /* ******************************************** */
+// /* pongo2 模板支持，定义rander类，以做界面模板显示处理 */
 
-/* HTML
-* @parsm
-	name --- 前端模板文件的名称
-	data --- 数据
-*/
-func (self *RequestCtxExtent) HTML(name string, dataMap map[string]interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			LogError(err)
-		}
-	}()
+// /* HTML
+// * @parsm
+// 	name --- 前端模板文件的名称
+// 	data --- 数据
+// */
+// func (self *RequestCtxExtent) HTML(name string, dataMap map[string]interface{}) {
+// 	defer func() {
+// 		if err := recover(); err != nil {
+// 			logger.LogError(err)
+// 		}
+// 	}()
 
-	render := getRender()
-	render.Template = render.gettmpl(name)
+// 	render := getRender()
+// 	render.Template = render.gettmpl(name)
 
-	self.SetContentType(render.Options.ContentType)
-	err := render.html(dataMap, self.Response.BodyWriter())
-	if err != nil {
-		LogError(err)
-	}
-}
+// 	self.SetContentType(render.Options.ContentType)
+// 	err := render.html(dataMap, self.Response.BodyWriter())
+// 	if err != nil {
+// 		logger.LogError(err)
+// 	}
+// }
 
-/* HTML
-* @parsm
-	name --- Wap端渲染
-	data --- 数据
-*/
-func (self *RequestCtxExtent) WAPHTML(name string, dataMap map[string]interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			LogError(err)
-		}
-	}()
+// /* HTML
+// * @parsm
+// 	name --- Wap端渲染
+// 	data --- 数据
+// */
+// func (self *RequestCtxExtent) WAPHTML(name string, dataMap map[string]interface{}) {
+// 	defer func() {
+// 		if err := recover(); err != nil {
+// 			logger.LogError(err)
+// 		}
+// 	}()
 
-	render := getWapRender()
-	render.Template = render.gettmpl(name)
+// 	render := getWapRender()
+// 	render.Template = render.gettmpl(name)
 
-	self.SetContentType(render.Options.ContentType)
-	err := render.html(dataMap, self.Response.BodyWriter())
-	if err != nil {
-		LogError(err)
-	}
-}
+// 	self.SetContentType(render.Options.ContentType)
+// 	err := render.html(dataMap, self.Response.BodyWriter())
+// 	if err != nil {
+// 		logger.LogError(err)
+// 	}
+// }
 
-/* HTML
-* @parsm
-	name --- Web端渲染
-	data --- 数据
-*/
-func (self *RequestCtxExtent) WEBHTML(name string, dataMap map[string]interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			LogError(err)
-		}
-	}()
+// /* HTML
+// * @parsm
+// 	name --- Web端渲染
+// 	data --- 数据
+// */
+// func (self *RequestCtxExtent) WEBHTML(name string, dataMap map[string]interface{}) {
+// 	defer func() {
+// 		if err := recover(); err != nil {
+// 			logger.LogError(err)
+// 		}
+// 	}()
 
-	render := getWebRender()
-	render.Template = render.gettmpl(name)
+// 	render := getWebRender()
+// 	render.Template = render.gettmpl(name)
 
-	self.SetContentType(render.Options.ContentType)
-	err := render.html(dataMap, self.Response.BodyWriter())
-	if err != nil {
-		LogError(err)
-	}
-}
+// 	self.SetContentType(render.Options.ContentType)
+// 	err := render.html(dataMap, self.Response.BodyWriter())
+// 	if err != nil {
+// 		logger.LogError(err)
+// 	}
+// }
 
-/* html模板rander的一些显示配置 */
-type Options struct {
-	TemplateDir string
-	ContentType string
-}
+// /* html模板rander的一些显示配置 */
+// type Options struct {
+// 	TemplateDir string
+// 	ContentType string
+// }
 
-type Render struct {
-	Options  *Options
-	Template *pongo2.Template
-	Context  pongo2.Context
-}
+// type Render struct {
+// 	Options  *Options
+// 	Template *pongo2.Template
+// 	Context  pongo2.Context
+// }
 
-/* 通过文件名称和数据，load取pongo2的模板文件并输出给浏览器
-* @parsm
-	name --- 前端模板文件的名称
-*/
-func (render *Render) gettmpl(name string) *pongo2.Template {
-	filename := path.Join(render.Options.TemplateDir, name)
-	return pongo2.Must(pongo2.FromFile(filename))
-}
+// /* 通过文件名称和数据，load取pongo2的模板文件并输出给浏览器
+// * @parsm
+// 	name --- 前端模板文件的名称
+// */
+// func (render *Render) gettmpl(name string) *pongo2.Template {
+// 	filename := path.Join(render.Options.TemplateDir, name)
+// 	return pongo2.Must(pongo2.FromFile(filename))
+// }
 
-/* 输出给浏览器
-* @parsm
-	data --- 输出给模板的数据
-*/
-func (render *Render) html(data interface{}, w io.Writer) error {
-	render.Context = pongo2.Context{
-		"data":            data,
-		"GoFloatWrap":     GoFloatWrap,
-		"ExtentIntString": ExtentIntString,
-	}
-	err := render.Template.ExecuteWriter(render.Context, w)
-	return err
-}
+// /* 输出给浏览器
+// * @parsm
+// 	data --- 输出给模板的数据
+// */
+// func (render *Render) html(data interface{}, w io.Writer) error {
+// 	render.Context = pongo2.Context{
+// 		"data":            data,
+// 		"GoFloatWrap":     GoFloatWrap,
+// 		"ExtentIntString": ExtentIntString,
+// 	}
+// 	err := render.Template.ExecuteWriter(render.Context, w)
+// 	return err
+// }
 
-/* 全局静态rander变量，调用请通过getRender
- * @parsm
- */
-var _rander *Render
-var _waprander *Render
+// /* 全局静态rander变量，调用请通过getRender
+//  * @parsm
+//  */
+// var _rander *Render
+// var _waprander *Render
 
-func getRender() *Render {
-	if nil != _rander {
-		return _rander
-	}
-	prjpath := utils.GetPwd()
-	return &Render{Options: &Options{
-		TemplateDir: prjpath + utils.GetPathSeparter() + "modules",
-		ContentType: "text/html; charset=utf-8",
-	}}
-}
+// func getRender() *Render {
+// 	if nil != _rander {
+// 		return _rander
+// 	}
+// 	prjpath := utils.GetPwd()
+// 	return &Render{Options: &Options{
+// 		TemplateDir: prjpath + utils.GetPathSeparter() + "modules",
+// 		ContentType: "text/html; charset=utf-8",
+// 	}}
+// }
 
-func getWapRender() *Render {
-	if nil != _waprander {
-		return _waprander
-	}
-	prjpath := utils.GetPwd()
-	return &Render{Options: &Options{
-		TemplateDir: prjpath + utils.GetPathSeparter() + "modules",
-		ContentType: "text/html; charset=utf-8",
-	}}
-}
+// func getWapRender() *Render {
+// 	if nil != _waprander {
+// 		return _waprander
+// 	}
+// 	prjpath := utils.GetPwd()
+// 	return &Render{Options: &Options{
+// 		TemplateDir: prjpath + utils.GetPathSeparter() + "modules",
+// 		ContentType: "text/html; charset=utf-8",
+// 	}}
+// }
 
-func getWebRender() *Render {
-	if nil != _waprander {
-		return _waprander
-	}
-	prjpath := utils.GetPwd()
-	return &Render{Options: &Options{
-		TemplateDir: prjpath + utils.GetPathSeparter() + "frontend",
-		ContentType: "text/html; charset=utf-8",
-	}}
-}
+// func getWebRender() *Render {
+// 	if nil != _waprander {
+// 		return _waprander
+// 	}
+// 	prjpath := utils.GetPwd()
+// 	return &Render{Options: &Options{
+// 		TemplateDir: prjpath + utils.GetPathSeparter() + "frontend",
+// 		ContentType: "text/html; charset=utf-8",
+// 	}}
+// }
 
-func GoFloatWrap(val float64, jd int) string {
-	fstr := "%0." + fmt.Sprintf("%d", jd) + "f"
-	fmt.Println(fstr)
-	return fmt.Sprintf(fstr, val)
-}
+// func GoFloatWrap(val float64, jd int) string {
+// 	fstr := "%0." + fmt.Sprintf("%d", jd) + "f"
+// 	logger.LogInfo(fstr)
+// 	return fmt.Sprintf(fstr, val)
+// }
 
-func ExtentIntString(val int64) string {
-	return fmt.Sprintf("%0d", val)
-}
+// func ExtentIntString(val int64) string {
+// 	return fmt.Sprintf("%0d", val)
+// }

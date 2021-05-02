@@ -16,11 +16,15 @@ require (
 	github.com/issue9/logs v1.0.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/mjiulee/go-sessions v0.0.0-20190802140811-e00ef2166824
 	github.com/nyaruka/phonenumbers v1.0.43 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
+	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/valyala/fasthttp v1.4.0
 	github.com/yudai/pp v2.0.1+incompatible // indirect
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	google.golang.org/appengine v1.6.0
 	gopkg.in/ini.v1 v1.44.0 // indirect
 	xorm.io/core v0.7.0
 )

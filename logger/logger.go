@@ -1,17 +1,18 @@
-package lego
+package logger
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/issue9/logs"
-	"github.com/mjiulee/lego/utils"
 	"os"
 	"runtime"
+
+	"github.com/issue9/logs"
+	"github.com/mjiulee/lego/utils"
 )
 
-func SetupLoggerBy(fname string) {
+func init() {
 	prjpath := utils.GetPwd()
-	cfgpaty := prjpath + utils.GetPathSeparter() + fname
+	cfgpaty := prjpath + utils.GetPathSeparter() + "logconfig.xml"
 
 	err := logs.InitFromXMLFile(cfgpaty)
 	if err != nil {
@@ -23,10 +24,6 @@ func SetupLoggerBy(fname string) {
 func Flush() {
 	defer logs.Flush()
 }
-
-// const (
-// 	_VER string = "1.0.2"
-// )
 
 /* Warn - 输出信息 */
 func LogInfo(info string) {
